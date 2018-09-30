@@ -1,3 +1,4 @@
+// Coordinator process for centralized mutual exclusion
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -7,13 +8,16 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include <time.h>
  
 #define PORT 8000
 #define MAXLINE 1024
 #define RESOURCES 2
 #define MAX_QUEUE_SIZE 10
+#define REQUEST_TIMEOUT 20
 
 struct sockaddr_in cs_queue[RESOURCES][MAX_QUEUE_SIZE], resource_holder[RESOURCES];
+// time_t resource_holder_timeout_check[RESOURCES];
 int queue_front[RESOURCES]={0}, queue_back[RESOURCES]={0};
 
 void enqueue(struct sockaddr_in client, int resource_id)
@@ -79,6 +83,7 @@ int main() {
 	
     char buffer[MAXLINE];
 	int CS_MUTEX[RESOURCES] = {0};
+	printf("Initialising the server at port 8000.\n");
     int sockfd = create_connection();
 	struct sockaddr_in cliaddr;
 	int len, n;
@@ -104,7 +109,6 @@ int main() {
 			}
 			else
 			{
-				strcpy(response, "UP");
 				enqueue(cliaddr, resource_id);
 				strcpy(response, "DENIED");
 			}
