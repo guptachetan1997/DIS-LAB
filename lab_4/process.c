@@ -1,3 +1,5 @@
+// Bully algorithm based election
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -8,9 +10,10 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <time.h>
- 
+
 #define MAXLINE 1024
 #define MAX_PROCESS 10
+int ELECTION_FLAG=0;
 
 int create_connection(int PORT)
 {
@@ -26,7 +29,7 @@ int create_connection(int PORT)
 	servaddr.sin_family    = AF_INET; // IPv4
 	servaddr.sin_addr.s_addr = INADDR_ANY;
 	servaddr.sin_port = htons(PORT);
-	if ( bind(sockfd, (const struct sockaddr *)&servaddr, 
+	if ( bind(sockfd, (const struct sockaddr *)&servaddr,
 			sizeof(servaddr)) < 0 )
 	{
 		perror("bind failed");
@@ -59,6 +62,7 @@ int send_election_message(int sockfd, int OTHER_PROCESS_PORTS[], int NUM_PROCESS
 			flag=0;
 		}
 	}
+	ELECTION_FLAG = 1;
 	return flag;
 }
 
@@ -69,13 +73,13 @@ void send_coord_message(int sockfd, int OTHER_PROCESS_PORTS[], int NUM_PROCESSES
 	strcpy(response, "CORD");
 	for(i=0 ; i<NUM_PROCESSES ; i++)
 	{
-		if(OTHER_PROCESS_PORTS[i] != MY_PORT)
+		if(1)//OTHER_PROCESS_PORTS[i] != MY_PORT)
 		{
 			send_message(OTHER_PROCESS_PORTS[i], sockfd, response);
 		}
 	}
 }
- 
+
 int main(int argc, char* argv[]) {
 
 	int MY_PORT= atoi(argv[1]);
@@ -88,9 +92,9 @@ int main(int argc, char* argv[]) {
 		OTHER_PROCESS_PORTS[i] = atoi(argv[3+i]);
 	}
 	int IS_INITIATOR= atoi(argv[3+NUM_PROCESSES]);
-	
+
     char buffer[MAXLINE];
-	
+
 	printf("Initialising the server at port %d.\n", MY_PORT);
     int sockfd = create_connection(MY_PORT);
 
@@ -105,31 +109,35 @@ int main(int argc, char* argv[]) {
 	}
     while(1)
     	{
-	    	memset(&recv_client_addr, 0, sizeof(recv_client_addr));
+	    	// memset(&recv_client_addr, 0, sizeof(recv_client_addr));
 			n = recvfrom(sockfd, (char *)buffer, MAXLINE, MSG_WAITALL, ( struct sockaddr *) &recv_client_addr, &len);
 			buffer[n] = '\0';
 			printf("MSG RECVD : %s\n", buffer);
 			if(!strcmp(buffer, "ELEC"))
 			{
-//				printf("%d\n", recv_client_addr.sin_port);
+				sleep(MY_PORT%5);
 				char response[MAXLINE];
 				strcpy(response, "EACK");
 				sendto(sockfd, (const char *)response, strlen(response), MSG_CONFIRM, (const struct sockaddr *) &recv_client_addr, sizeof(recv_client_addr));
-				if(send_election_message(sockfd, OTHER_PROCESS_PORTS, NUM_PROCESSES, MY_PORT)){
-					send_coord_message(sockfd, OTHER_PROCESS_PORTS, NUM_PROCESSES, MY_PORT);
-					printf("I AM COORDINATOR.\n");
-					}
-					
+				sleep(MY_PORT%5);
+				if(ELECTION_FLAG == 0){
+					if(send_election_message(sockfd, OTHER_PROCESS_PORTS, NUM_PROCESSES, MY_PORT)){
+						send_coord_message(sockfd, OTHER_PROCESS_PORTS, NUM_PROCESSES, MY_PORT);
+						printf("I AM COORDINATOR.\n");
+						}
+				}
+
 			}
 			else if(!strcmp(buffer, "EACK"))
 			{
 				//stop_election()
+				ELECTION_FLAG = 1;
 				continue;
 			}
 			else if(!strcmp(buffer, "CORD"))
 			{
 				//set_new_coordinator
-				COORDINATOR_PORT = recv_client_addr.sin_port;
+				COORDINATOR_PORT = ntohs(recv_client_addr.sin_port);
 				//printf("COORDINATOR WAS SET\n");
 			}
 		}
