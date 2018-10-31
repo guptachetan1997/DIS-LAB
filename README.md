@@ -7,3 +7,4 @@
 5. Ring Algorithm for Elections.
 6. Lamport Logical Clock.
 7. Berkeley Time Synchronization
+8. Entry Consistency using Mutual Exclusion
