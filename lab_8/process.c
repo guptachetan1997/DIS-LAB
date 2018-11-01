@@ -1,5 +1,4 @@
 // Process which acquires mutex and updates a replicated data store
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -11,23 +10,14 @@
 #include <netdb.h>
 #include <time.h>
 #include <sys/poll.h>
-
 #define MAXLINE 1024
 #define MAX_PROCESS 5
 
 int MY_PORT, MUTEX_SERVER_PORT,IS_OWNER, RESOURCE_VALUE=0;
 
-int max(int a , int b)
-{
-    if(a > b)
-        return a;
-    else
-        return b;
-}
-
 struct Message
 {
-	char state; // L -> Lock resource, R -> Release resource
+    char state; // L -> Lock resource, R -> Release resource
     int currentValue; // consistent value of resource
     int granted;
 };
@@ -35,19 +25,19 @@ struct Message
 int create_connection(int PORT)
 {
     int sockfd;
-	struct sockaddr_in servaddr;
-	if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
+    struct sockaddr_in servaddr;
+    if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) 
+	{
 		perror("socket creation failed");
 		exit(EXIT_FAILURE);
-	}
+    }
 	int optval = 1;
   	setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (const void *)&optval , sizeof(int));
 	memset(&servaddr, 0, sizeof(servaddr));
 	servaddr.sin_family    = AF_INET; // IPv4
 	servaddr.sin_addr.s_addr = INADDR_ANY;
 	servaddr.sin_port = htons(PORT);
-	if ( bind(sockfd, (const struct sockaddr *)&servaddr,
-			sizeof(servaddr)) < 0 )
+	if ( bind(sockfd, (const struct sockaddr *)&servaddr, sizeof(servaddr)) < 0 )
 	{
 		perror("bind failed");
 		exit(EXIT_FAILURE);
@@ -75,7 +65,6 @@ void acquire_lock(int sockfd)
     struct sockaddr_in recv_client_addr, send_client_addr;
     int len=sizeof(struct sockaddr_in), n;
     n = recvfrom(sockfd, temp, sizeof(*temp), MSG_WAITALL, ( struct sockaddr *) &recv_client_addr, &len);
-    // insert some logic
     RESOURCE_VALUE = temp->currentValue;
     IS_OWNER = 1;
 }
@@ -98,11 +87,11 @@ int main(int argc, char* argv[]) {
 	printf("Initialising server at port %d\n", MY_PORT);
     sleep(10 - MY_PORT % 10);
     int sockfd = create_connection(MY_PORT);
-
     struct sockaddr_in recv_client_addr, send_client_addr;
     int len=sizeof(struct sockaddr_in), n;
     int counter = 10;
-    while(counter){
+    while(counter)
+	{
         counter--;
         double random_number = (double)rand() / (double)((unsigned)RAND_MAX + 1);
         if(random_number >= 0.7)

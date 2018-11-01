@@ -17,7 +17,6 @@
 
 int sockfd;
 int resourceValue=0, resourceLock=0;
-
 pthread_mutex_t LOCK=PTHREAD_MUTEX_INITIALIZER;
 
 struct Message
@@ -105,7 +104,6 @@ void *grantLockThread(void *vargp)
     {
         if(queue_empty())
         {
-            //sleep(10);
             continue;
         }
         else if(resourceLock == 0)
@@ -124,22 +122,14 @@ void *grantLockThread(void *vargp)
 }
 
 int main(int argc, char* argv[]) {
-
 	int MY_PORT= atoi(argv[1]);
-
     struct Message * temp = malloc(sizeof(struct Message));
-
 	printf("Initialising the mutex server at port %d.\n", MY_PORT);
     sockfd = create_connection(MY_PORT);
-
-    pthread_t thread_id; 
-    
-    pthread_create(&thread_id, NULL, grantLockThread, NULL); 
-    // pthread_join(thread_id, NULL); 
-
+    pthread_t thread_id;
+    pthread_create(&thread_id, NULL, grantLockThread, NULL);
     struct sockaddr_in recv_client_addr, send_client_addr;
     int len=sizeof(struct sockaddr_in), n;
-
     while(1)
     {
         n = recvfrom(sockfd, temp, sizeof(*temp), MSG_WAITALL, ( struct sockaddr *) &recv_client_addr, &len);
