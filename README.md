@@ -9,3 +9,4 @@
 7. Berkeley Time Synchronization
 8. Entry Consistency using Mutual Exclusion
 9. Elections in Wireless Networks
+10. 2 Phase commit
